@@ -12,10 +12,12 @@ import time
 import sys
 import board
 import nonblocking_serialinput as nb_serialin
+import digitalio
 
 ##########################################
 # globals
-my_input = nb_serialin.NonBlockingSerialInput()
+led = digitalio.DigitalInOut(board.LED)
+led.direction = digitalio.Direction.OUTPUT
 
 runtime_print = True
 runtime_print_next = time.monotonic()
@@ -30,7 +32,7 @@ def userinput_print_help(self):
     global runtime_print
     global runtime_print_intervall
     print(
-        "you do some things:\n"
+        "you can change some things:\n"
         "- 't': toggle print runtime ({runtime_print})\n"
         "- 'time set:???': set print runtime intervall ({runtime_print_intervall: > 7.2f}s)\n"
         "- 'exit'  stop program\n"
@@ -55,11 +57,16 @@ def userinput_handling(input_string):
             runtime_print_intervall = value
 
 
+my_input = nb_serialin.NonBlockingSerialInput(
+    parse_input_fn=userinput_handling,
+    print_help_fn=userinput_print_help,
+)
+
 ##########################################
 # functions
 
 
-def main_update(self):
+def main_update():
     """Do all the things your main code want's to do...."""
     global runtime_print
     global runtime_print_next
@@ -68,7 +75,8 @@ def main_update(self):
     if runtime_print:
         if runtime_print_next < time.monotonic():
             runtime_print_next = time.monotonic() + runtime_print_intervall
-            print("{: > 7.2f}s)".format(time.monotonic()))
+            print("{: > 7.2f}s".format(time.monotonic()))
+            led.value = not led.value
 
 
 ##########################################
