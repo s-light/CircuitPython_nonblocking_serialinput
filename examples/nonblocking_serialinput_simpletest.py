@@ -27,7 +27,7 @@ runtime_print_intervall = 1.0
 # menu
 
 
-def userinput_print_help(self):
+def userinput_print_help():
     """Print Help."""
     global runtime_print
     global runtime_print_intervall

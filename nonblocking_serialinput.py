@@ -50,8 +50,8 @@ class NonBlockingSerialInput(object):
         serial=usb_cdc.console,
         encoding="utf-8",
         line_end_custom=None,
-        universal_line_end_basic=True,
-        universal_line_end_advanced=False,
+        use_universal_line_end_basic=True,
+        use_universal_line_end_advanced=False,
     ):
         super(NonBlockingSerialInput, self).__init__()
         self.parse_input_fn = parse_input_fn
@@ -61,13 +61,14 @@ class NonBlockingSerialInput(object):
         self.line_end_list = []
         if line_end_custom:
             self.line_end_list.extend(line_end_custom)
-        if universal_line_end_basic:
-            self.line_end_list.extend(self.universal_line_end_basic)
-        if universal_line_end_advanced:
-            self.line_end_list.extend(self.universal_line_end_advanced)
+        if use_universal_line_end_basic:
+            self.line_end_list.extend(universal_line_end_basic)
+        if use_universal_line_end_advanced:
+            self.line_end_list.extend(universal_line_end_advanced)
 
         # no block:
         self.serial.timeout = 0
+        self.input_buffer = ""
         self.input_list = []
 
     def _parse_input_fallback(self, input_string):
@@ -116,9 +117,12 @@ class NonBlockingSerialInput(object):
             #     # we have to leave the last part in place..
             #     pass
             # self.input_list.extend(self.input_buffer.splitlines(self.line_end_list))
-            lines, rest = self.splitlines_advanced(self.input_buffer)
+            lines, rest = splitlines_advanced(self.input_buffer)
             self.input_list.extend(lines)
-            self.input_buffer = rest
+            if rest:
+                self.input_buffer = rest
+            else:
+                self.input_buffer = ""
 
     def input(self):
         """get oldest input string if there is any available. Otherwise None."""
@@ -134,7 +138,9 @@ class NonBlockingSerialInput(object):
             available = self.serial.in_waiting
             while available:
                 self.input_buffer += self.serial.read(available).decode(
-                    encoding=self.encoding, errors="strict"
+                    self.encoding,
+                    # encoding=self.encoding,
+                    # errors="strict",
                 )
                 self._buffer_check_and_handle_line_ends()
                 available = self.serial.in_waiting
@@ -184,26 +190,42 @@ universal_line_end_advanced = [
 ]
 
 
+# def find_first_line_end(input_string, line_end_list=universal_line_end_basic, start=0):
+#     result = -1
+#     # print("input_string: {}".format(repr(input_string)))
+#     i = iter(line_end_list)
+#     while result is -1:
+#         try:
+#             line_end = next(i)
+#         except StopIteration:
+#             result = False
+#             # print("StopIteration")
+#         else:
+#             # print("line_end: {}".format(repr(line_end)))
+#             result = input_string.find(line_end, start)
+#         # print("result: {}".format(repr(result)))
+#     if result is False:
+#         result = -1
+#     return result
+
+
 def find_first_line_end(input_string, line_end_list=universal_line_end_basic, start=0):
-    result = -1
-    # print("input_string: {}".format(repr(input_string)))
-    i = iter(line_end_list)
-    while result is -1:
-        try:
-            line_end = next(i)
-        except StopIteration:
-            result = False
-            # print("StopIteration")
-        else:
-            # print("line_end: {}".format(repr(line_end)))
-            result = input_string.find(line_end, start)
-        # print("result: {}".format(repr(result)))
-    if result is False:
+    result = None
+    for line_end in line_end_list:
+        index = input_string.find(line_end, start)
+        # print("line_end: {: >10}; index: {}".format(repr(line_end), index))
+        # just remember the first / smallest index
+        if index > -1:
+            if result is None:
+                result = index
+            else:
+                result = min(index, result)
+    if result is None:
         result = -1
     return result
 
 
-def splitlines_advanced(input_string, line_end_list):
+def splitlines_advanced(input_string, line_end_list=universal_line_end_basic):
     result = []
     rest = None
     # we have to do the splitting manually as we have a list of available seperators..
@@ -211,17 +233,28 @@ def splitlines_advanced(input_string, line_end_list):
     while (
         pos := find_first_line_end(input_string, line_end_list, start=pos_last)
     ) > -1:
-        result.append(input_string[:pos])
-        print("input_string[:pos]: {}".format(repr(input_string[:pos])))
-        pos_last = pos
-    if pos_last <= len(input_string):
-        print("ping - rest")
+        # print("pos: {}".format(repr(pos)))
+        # print("input_string[pos_last:pos]: {}".format(repr(input_string[pos_last:pos])))
+        result.append(input_string[pos_last:pos])
+        pos_last = pos + 1
+        # print("pos_last: {}".format(repr(pos_last)))
+    # print("pos_last: {}".format(repr(pos_last)))
+    # print("len(input_string): {}".format(repr(len(input_string))))
+    if pos_last < len(input_string):
+        # print("  rest handling:")
+        # print("input_string[pos_last:]: {}".format(repr(input_string[pos_last:])))
+        rest = input_string[pos_last:]
     return (result, rest)
 
 
 """
 debugging:
-nbs.splitlines_advanced("Hallo\n Welt\bEin Wünder Schön€r Tag!", nbs.universal_line_end_basic)
+import nonblocking_serialinput as nbs
+nbs.splitlines_advanced("Hallo\n Welt\r")
+
+nbs.splitlines_advanced("Hallo\n Welt\rTag!")
+nbs.splitlines_advanced("Hallo\n Welt\bEin Wünder Schön€r Tag!")
+
 import nonblocking_serialinput as nbs
 nbs.find_first_line_end("Hallo\nWelt\rTest", start=0)
 nbs.find_first_line_end("Hallo\nWelt\rTest", start=5)
