@@ -11,8 +11,8 @@
 import time
 import sys
 import board
-import nonblocking_serialinput as nb_serialin
 import digitalio
+import nonblocking_serialinput as nb_serialin
 
 ##########################################
 # globals
@@ -50,6 +50,7 @@ def userinput_handling(input_string):
     """Check Input."""
     global running
     global runtime_print
+    global runtime_print_next
     global runtime_print_intervall
 
     if "tr" in input_string:
@@ -59,13 +60,14 @@ def userinput_handling(input_string):
         value = nb_serialin.parse_value(input_string, "time set")
         if nb_serialin.is_number(value):
             runtime_print_intervall = value
+            runtime_print_next = time.monotonic() + runtime_print_intervall
     if "exit" in input_string:
         print("Stop Program running.")
         running = False
 
 
 my_input = nb_serialin.NonBlockingSerialInput(
-    parse_input_fn=userinput_handling,
+    input_handling_fn=userinput_handling,
     print_help_fn=userinput_print_help,
 )
 
@@ -93,11 +95,12 @@ def main_update():
 def main():
     """Main."""
     # wait some time untill the computer / terminal is ready
-    for index in range(10):
+    for i in range(10):
         print(".", end="")
         time.sleep(0.5 / 10)
     print("")
     print(42 * "*")
+    print("nonblocking_serialinput_advanced.py")
     print("Python Version: " + sys.version)
     print("board: " + board.board_id)
     print(42 * "*")

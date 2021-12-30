@@ -27,9 +27,7 @@ Implementation Notes
     <https://circuitpython.readthedocs.io/en/latest/shared-bindings/usb_cdc/index.html>`_
 """
 
-import time
-import board
-import supervisor
+# import supervisor
 import usb_cdc
 
 __version__ = "0.0.0-auto.0"
@@ -39,25 +37,28 @@ __repo__ = "https://github.com/s-light/CircuitPython_nonblocking_serialinput.git
 # NonBlockingSerialInput Class
 
 
-class NonBlockingSerialInput(object):
+class NonBlockingSerialInput:
     """docstring for NonBlockingSerialInput."""
 
     def __init__(
         self,
         *,  # force keyword arguments
-        parse_input_fn=None,
+        input_handling_fn=None,
         print_help_fn=None,
         serial=usb_cdc.console,
         echo=True,
+        statusline=False,
         encoding="utf-8",
         line_end_custom=None,
         use_universal_line_end_basic=True,
         use_universal_line_end_advanced=False,
     ):
-        super(NonBlockingSerialInput, self).__init__()
-        self.parse_input_fn = parse_input_fn
+        super()
+        self.input_handling_fn = input_handling_fn
         self.print_help_fn = print_help_fn
         self.serial = serial
+        self.echo = echo
+        self.statusline = statusline
         self.encoding = encoding
         self.line_end_list = []
         if line_end_custom:
@@ -71,19 +72,6 @@ class NonBlockingSerialInput(object):
         self.serial.timeout = 0
         self.input_buffer = ""
         self.input_list = []
-
-    def _parse_input_fallback(self, input_string):
-        pass
-
-    def _print_help_fallback(self):
-        pass
-
-    def memo(self):
-        if self.serial_connected:
-            self.print_help()
-        # prepare new input
-        self.print_help()
-        print(">> ", end="")
 
     def _buffer_count_line_ends(self):
         result = 0
@@ -141,7 +129,10 @@ class NonBlockingSerialInput(object):
         if self.serial.connected:
             available = self.serial.in_waiting
             while available:
-                self.input_buffer += self.serial.read(available).decode(
+                raw = self.serial.read(available)
+                if self.echo and not self.statusline:
+                    self.serial.write(raw)
+                self.input_buffer += raw.decode(
                     self.encoding,
                     # encoding=self.encoding,
                     # errors="strict",
@@ -149,11 +140,11 @@ class NonBlockingSerialInput(object):
                 self._buffer_check_and_handle_line_ends()
                 available = self.serial.in_waiting
         parsed_input = False
-        if self.parse_input_fn:
+        if self.input_handling_fn:
             while self.input_list:
                 # first in first out
                 oldest_input = self.input_list.pop(0)
-                self.parse_input_fn(oldest_input)
+                self.input_handling_fn(oldest_input)
                 parsed_input = True
         if parsed_input and self.print_help_fn:
             self.print_help_fn()
@@ -213,8 +204,13 @@ universal_line_end_advanced = [
 #     return result
 
 
-def find_first_line_end(input_string, line_end_list=universal_line_end_basic, start=0):
+def find_first_line_end(input_string, line_end_list=None, start=0):
+    """
+    Find first line_end in input_string.
+    """
     result = None
+    if line_end_list is None:
+        line_end_list = universal_line_end_basic
     for line_end in line_end_list:
         index = input_string.find(line_end, start)
         # print("line_end: {: >10}; index: {}".format(repr(line_end), index))
@@ -229,7 +225,12 @@ def find_first_line_end(input_string, line_end_list=universal_line_end_basic, st
     return result
 
 
-def splitlines_advanced(input_string, line_end_list=universal_line_end_basic):
+def splitlines_advanced(input_string, line_end_list=None):
+    """
+    Split lines in input_string at all line_ends in line_end_list.
+    """
+    if line_end_list is None:
+        line_end_list = universal_line_end_basic
     result = []
     rest = None
     # we have to do the splitting manually as we have a list of available seperators..
@@ -267,7 +268,16 @@ nbs.find_first_line_end("Hallo\nWelt\rTest", start=11)
 """
 
 
-def parse_value(input_string, pre_text):
+def parse_value(input_string, pre_text=""):
+    """
+    Parse Value from input_string.
+
+    known values are numbers (`float()` is used), None, True, False
+
+    :param string input_string: input to parse
+    :param string pre_text: text at start of input_string to ignore. defaults to ""
+    :return float | None | True | False: parsed value
+    """
     value = None
     # strip pre_text
     # ignore error 'whitespace before :'
@@ -282,11 +292,11 @@ def parse_value(input_string, pre_text):
     else:
         try:
             value = float(input_string)
-        except ValueError as e:
+        except ValueError as error:
             print(
                 "Exception parsing '{pre_text}': {error}".format(
                     pre_text=pre_text,
-                    error=e,
+                    error=error,
                 )
             )
     return value

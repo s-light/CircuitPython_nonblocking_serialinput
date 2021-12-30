@@ -10,8 +10,8 @@
 
 import time
 import board
-import nonblocking_serialinput as nb_serialin
 import digitalio
+import nonblocking_serialinput as nb_serialin
 
 ##########################################
 # globals
@@ -48,7 +48,10 @@ def main():
             if "exit" in input_string:
                 print("Stop Program running.")
                 running = False
-            print("type 'exit' to stop the program.")
+            elif "hello" in input_string:
+                print("World :-)")
+            else:
+                print("type 'exit' to stop the program.")
         # live sign
         if runtime_print_next < time.monotonic():
             runtime_print_next = time.monotonic() + runtime_print_intervall
