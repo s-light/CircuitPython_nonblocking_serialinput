@@ -48,6 +48,7 @@ class NonBlockingSerialInput(object):
         parse_input_fn=None,
         print_help_fn=None,
         serial=usb_cdc.console,
+        echo=True,
         encoding="utf-8",
         line_end_custom=None,
         use_universal_line_end_basic=True,
@@ -117,17 +118,20 @@ class NonBlockingSerialInput(object):
             #     # we have to leave the last part in place..
             #     pass
             # self.input_list.extend(self.input_buffer.splitlines(self.line_end_list))
-            lines, rest = splitlines_advanced(self.input_buffer)
+            lines, rest = splitlines_advanced(self.input_buffer, self.line_end_list)
+            # print("lines: {}; rest: {}".format(repr(lines), repr(rest)))
             self.input_list.extend(lines)
+            # print("self.input_list: {}".format(repr(self.input_list)))
             if rest:
                 self.input_buffer = rest
             else:
                 self.input_buffer = ""
 
     def input(self):
-        """get oldest input string if there is any available. Otherwise None."""
+        """get oldest input string if there is any available. Otherwise an emtpy string."""
         try:
             result = self.input_list.pop(0)
+            # print("result: {}".format(repr(result)))
         except IndexError:
             result = None
         return result
@@ -145,8 +149,8 @@ class NonBlockingSerialInput(object):
                 self._buffer_check_and_handle_line_ends()
                 available = self.serial.in_waiting
         parsed_input = False
-        while self.input_list:
-            if self.parse_input_fn:
+        if self.parse_input_fn:
+            while self.input_list:
                 # first in first out
                 oldest_input = self.input_list.pop(0)
                 self.parse_input_fn(oldest_input)
@@ -263,7 +267,7 @@ nbs.find_first_line_end("Hallo\nWelt\rTest", start=11)
 """
 
 
-def parse_value(self, input_string, pre_text):
+def parse_value(input_string, pre_text):
     value = None
     # strip pre_text
     # ignore error 'whitespace before :'
@@ -288,7 +292,7 @@ def parse_value(self, input_string, pre_text):
     return value
 
 
-def is_number(s):
+def is_number(value):
     """
     Return true if string is a number.
 
@@ -296,7 +300,7 @@ def is_number(s):
     https://stackoverflow.com/questions/354038/how-do-i-check-if-a-string-is-a-number-float
     """
     try:
-        float(s)
+        float(value)
     except TypeError:
         # return NaN
         return False
