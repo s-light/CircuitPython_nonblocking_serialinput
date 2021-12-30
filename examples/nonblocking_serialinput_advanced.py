@@ -12,103 +12,78 @@ import time
 import sys
 import board
 import nonblocking_serialinput as nb_serialin
+import digitalio
 
 ##########################################
 # globals
-my_input = nb_serialin.NonBlockingSerialInput()
+led = digitalio.DigitalInOut(board.LED)
+led.direction = digitalio.Direction.OUTPUT
 
+running = True
 
-class MyProjectMainClass(object):
-    """This is just the Container Class for my Project."""
-
-    def __init__(self, arg):
-        super(MyProjectMainClass, self).__init__()
-        self.arg = arg
-
+runtime_print = True
+runtime_print_next = time.monotonic()
+runtime_print_intervall = 1.0
 
 ##########################################
 # menu
 
 
-def print_help(self):
+def userinput_print_help():
     """Print Help."""
-    profile_list = ""
-    # for name, profile in self.profiles.items():
-    #     profile_list += "  {}\n".format(profile.title)
-    # ^--> random order..
-    for name in self.profiles_names:
-        current = ""
-        if self.profiles[name] is self.profile_selected:
-            current = "*"
-        profile_list += "  {: 1}{}\n".format(current, self.profiles[name].title_short)
+    global runtime_print
+    global runtime_print_intervall
     print(
-        "you do some things:\n"
-        "- 't': toggle print runtime ({print_runtime})\n"
-        "- 's': set print runtime intervall ({intervall: > 7.2f})\n"
-        "- 'pn' select next profil\n"
-        "{profile_list}"
-        "- 'calibrate'\n"
-        "- 'start' reflow cycle\n"
-        "- 'stop'  reflow cycle\n"
+        "you can change some things:\n"
+        "- 'tr': toggle print runtime ({runtime_print})\n"
+        "- 'time set:???': set print runtime intervall ({runtime_print_intervall: > 7.2f}s)\n"
+        "- 'exit'  stop program\n"
         "".format(
-            profile_list=profile_list,
-            heater_target=self.reflowcontroller.heater_target,
+            runtime_print=runtime_print,
+            runtime_print_intervall=runtime_print_intervall,
         ),
         end="",
     )
-    self.print_temperature()
 
 
-def check_input(self):
+def userinput_handling(input_string):
     """Check Input."""
-    input_string = input()
-    # sys.stdin.read(1)
-    if "pn" in input_string:
-        self.reflowcontroller.profile_select_next()
-    if "pid p" in input_string:
-        value = nb_serialin.parse_value(input_string, "pid p")
-        if value:
-            self.reflowcontroller.pid.P_gain = value
-    if "h" in input_string:
-        value = nb_serialin.parse_value(input_string, "h")
+    global running
+    global runtime_print
+    global runtime_print_intervall
+
+    if "tr" in input_string:
+        runtime_print = not runtime_print
+    if "time set" in input_string:
+        print("time set:")
+        value = nb_serialin.parse_value(input_string, "time set")
         if nb_serialin.is_number(value):
-            self.reflowcontroller.heater_target = value
-    # prepare new input
-    self.print_help()
-    print(">> ", end="")
+            runtime_print_intervall = value
+    if "exit" in input_string:
+        print("Stop Program running.")
+        running = False
 
 
-@staticmethod
-def input_parse_pixel_set(input_string):
-    """parse pixel_set."""
-    # row = 0
-    # col = 0
-    # value = 0
-    # sep_pos = input_string.find(",")
-    # sep_value = input_string.find(":")
-    # try:
-    #     col = int(input_string[1:sep_pos])
-    # except ValueError as e:
-    #     print("Exception parsing 'col': ", e)
-    # try:
-    #     row = int(input_string[sep_pos + 1 : sep_value])
-    # except ValueError as e:
-    #     print("Exception parsing 'row': ", e)
-    # try:
-    #     value = int(input_string[sep_value + 1 :])
-    # except ValueError as e:
-    #     print("Exception parsing 'value': ", e)
-    # pixel_index = 0
-    pass
-
+my_input = nb_serialin.NonBlockingSerialInput(
+    parse_input_fn=userinput_handling,
+    print_help_fn=userinput_print_help,
+)
 
 ##########################################
 # functions
 
 
-def main_update(self):
+def main_update():
     """Do all the things your main code want's to do...."""
-    pass
+    global runtime_print
+    global runtime_print_next
+    global runtime_print_intervall
+
+    if runtime_print:
+        if runtime_print_next < time.monotonic():
+            runtime_print_next = time.monotonic() + runtime_print_intervall
+            print("{: > 7.2f}s".format(time.monotonic()))
+            led.value = not led.value
 
 
 ##########################################
@@ -128,6 +103,7 @@ def main():
     print(42 * "*")
     print("run")
 
+    global running
     running = True
     while running:
         try:
