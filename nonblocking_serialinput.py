@@ -128,7 +128,7 @@ class NonBlockingSerialInput(object):
                 self.input_buffer = ""
 
     def input(self):
-        """get oldest input string if there is any available. Otherwise None."""
+        """get oldest input string if there is any available. Otherwise an emtpy string."""
         try:
             result = self.input_list.pop(0)
             # print("result: {}".format(repr(result)))
