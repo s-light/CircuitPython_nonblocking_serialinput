@@ -1,5 +1,4 @@
-# SPDX-FileCopyrightText: 2017 Scott Shawcroft, written for Adafruit Industries
-# SPDX-FileCopyrightText: Copyright (c) 2021 Stefan Krüger for s-light
+# SPDX-FileCopyrightText: Copyright (c) 2021 Stefan Krüger s-light.eu
 #
 # SPDX-License-Identifier: MIT
 """
@@ -15,9 +14,6 @@ Implementation Notes
 --------------------
 
 **Hardware:**
-
-.. todo:: Add links to any specific hardware product page(s), or category page(s).
-  Use unordered list & hyperlink rST inline format: "* `Link Text <url>`_"
 
 **Software and Dependencies:**
 
@@ -38,7 +34,41 @@ __repo__ = "https://github.com/s-light/CircuitPython_nonblocking_serialinput.git
 
 
 class NonBlockingSerialInput:
-    """docstring for NonBlockingSerialInput."""
+    """Non Blocking Serial Input Class.
+
+    This CircuitPython helper class can be used as non-blocking *drop-in* for the build
+    in ``input()`` method.
+    And also as event / callback based handling.
+    It implements the full input buffer handling and line-end parsing.
+
+    all parameters are keyword parameters.
+
+    :param function input_handling_fn: function to call if there is one ore more
+        fully received new lines. ``input_handling(input_string: string)``
+        Default: None
+    :param function print_help_fn:function to call when a help text should be printed
+        fully received new lines. ``print_help()``
+        Default: None
+    :param ~usb_cdc.Serial serial: serial connection object to use
+        Default: usb_cdc.console
+    :param bool echo: enable/disable remote echo
+        Default: True
+    :param bool statusline: enable/disable status line handling - `Not implemented yet - issue #1:
+        <https://github.com/s-light/CircuitPython_nonblocking_serialinput/issues/1>`_
+        Default: False
+    :param string encoding: input string encoding
+        Default: "utf-8"
+    :param string, list line_end_custom: set custom line ends
+        Default: None
+    :param bool use_universal_line_end_basic: use a basic default set of line_ends
+        [`\n`, '\r', '\r\n']
+        Default: True
+    :param bool use_universal_line_end_advanced:  use a advanced default set of line_ends
+        ['\v', '\f', '\x1c',...]
+        Default: False
+    :param bool verbose: print debugging information in some internal functions. Default to False
+
+    """
 
     def __init__(
         self,
@@ -52,6 +82,7 @@ class NonBlockingSerialInput:
         line_end_custom=None,
         use_universal_line_end_basic=True,
         use_universal_line_end_advanced=False,
+        verbose=False,
     ):
         super()
         self.input_handling_fn = input_handling_fn
@@ -67,6 +98,7 @@ class NonBlockingSerialInput:
             self.line_end_list.extend(universal_line_end_basic)
         if use_universal_line_end_advanced:
             self.line_end_list.extend(universal_line_end_advanced)
+        self.verbose = verbose
 
         # no block:
         self.serial.timeout = 0
@@ -96,30 +128,28 @@ class NonBlockingSerialInput:
 
     def _buffer_check_and_handle_line_ends(self):
         if self._buffer_count_line_ends():
-            # we have at minimum one full command.
-            # let us extract this.
-            # buffer_endswith = self._buffer_endswith_line_end()
-            # if buffer_endswith:
-            #     # just split the lines and all is fine..
-            #     pass
-            # else:
-            #     # we have to leave the last part in place..
-            #     pass
-            # self.input_list.extend(self.input_buffer.splitlines(self.line_end_list))
             lines, rest = splitlines_advanced(self.input_buffer, self.line_end_list)
-            # print("lines: {}; rest: {}".format(repr(lines), repr(rest)))
             self.input_list.extend(lines)
-            # print("self.input_list: {}".format(repr(self.input_list)))
+            if self.verbose:
+                print("lines: {}; rest: {}".format(repr(lines), repr(rest)))
+                print("self.input_list: {}".format(repr(self.input_list)))
             if rest:
                 self.input_buffer = rest
             else:
                 self.input_buffer = ""
 
     def input(self):
-        """get oldest input string if there is any available. Otherwise an emtpy string."""
+        """
+        Input.
+
+        get oldest input string if there is any available. Otherwise an emtpy string.
+
+        :return string: if available oldest input_line. Otherwise `""`
+        """
         try:
             result = self.input_list.pop(0)
-            # print("result: {}".format(repr(result)))
+            if self.verbose:
+                print("result: {}".format(repr(result)))
         except IndexError:
             result = None
         return result
@@ -132,11 +162,10 @@ class NonBlockingSerialInput:
                 raw = self.serial.read(available)
                 if self.echo and not self.statusline:
                     self.serial.write(raw)
-                self.input_buffer += raw.decode(
-                    self.encoding,
-                    # encoding=self.encoding,
-                    # errors="strict",
-                )
+                self.input_buffer += raw.decode(self.encoding)
+                # decode: keyword argeuments and errors not supported by CircuitPython
+                # encoding=self.encoding,
+                # errors="strict",
                 self._buffer_check_and_handle_line_ends()
                 available = self.serial.in_waiting
         parsed_input = False
@@ -153,8 +182,13 @@ class NonBlockingSerialInput:
 ##########################################
 # helper
 
-# source for universal_line_end
-# https://docs.python.org/3.8/library/stdtypes.html#str.splitlines
+"""
+source for universal_line_end
+https://docs.python.org/3.8/library/stdtypes.html#str.splitlines
+
+:attribute list: universal_line_end_basic
+:attribute list: universal_line_end_advanced
+"""
 universal_line_end_basic = [
     # Line Feed
     "\n",
@@ -204,9 +238,15 @@ universal_line_end_advanced = [
 #     return result
 
 
+# def find_first_line_end(input_string, line_end_list=None, start=0, return_line_end=False):
 def find_first_line_end(input_string, line_end_list=None, start=0):
     """
-    Find first line_end in input_string.
+    Find first line_end from line_end_list in input_string.
+
+    :param string input_string: input search
+    :param list line_end_list: list with strings to search for.
+    :param int start: start position for search. (default = 0)
+    :return int: index of first found line_end; `-1` if nothing is found.
     """
     result = None
     if line_end_list is None:
@@ -228,10 +268,20 @@ def find_first_line_end(input_string, line_end_list=None, start=0):
 def splitlines_advanced(input_string, line_end_list=None):
     """
     Split lines in input_string at all line_ends in line_end_list.
+
+    This function searches for the all occurenc of all of strings in line_end_list.
+    then splits at these points. the resulting list is returned.
+    this also returns empty string segments.
+    the search happens in the order of line_end_list.
+    if the string does not end with a line_end symbol this last part will be returned in `rest`
+
+    :param string input_string: input to split
+    :param list line_end_list: list with strings where the splitting should happen.
+    :return tuple: Tuple (result_list, rest);
     """
     if line_end_list is None:
         line_end_list = universal_line_end_basic
-    result = []
+    result_list = []
     rest = None
     # we have to do the splitting manually as we have a list of available seperators..
     pos_last = 0
@@ -240,7 +290,7 @@ def splitlines_advanced(input_string, line_end_list=None):
     ) > -1:
         # print("pos: {}".format(repr(pos)))
         # print("input_string[pos_last:pos]: {}".format(repr(input_string[pos_last:pos])))
-        result.append(input_string[pos_last:pos])
+        result_list.append(input_string[pos_last:pos])
         pos_last = pos + 1
         # print("pos_last: {}".format(repr(pos_last)))
     # print("pos_last: {}".format(repr(pos_last)))
@@ -249,7 +299,7 @@ def splitlines_advanced(input_string, line_end_list=None):
         # print("  rest handling:")
         # print("input_string[pos_last:]: {}".format(repr(input_string[pos_last:])))
         rest = input_string[pos_last:]
-    return (result, rest)
+    return (result_list, rest)
 
 
 """
@@ -308,6 +358,9 @@ def is_number(value):
 
     based on
     https://stackoverflow.com/questions/354038/how-do-i-check-if-a-string-is-a-number-float
+
+    :param string value: input to check
+    :return bool: True if value is a number, otherwise False.
     """
     try:
         float(value)

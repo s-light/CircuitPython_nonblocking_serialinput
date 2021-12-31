@@ -26,7 +26,7 @@ CircuitPython helper library to handle serial user input in an nonblocking way.
 
 Dependencies
 =============
-This driver depends on:
+This helper library depends on:
 
 * `Adafruit CircuitPython <https://github.com/adafruit/circuitpython>`_
 
@@ -62,8 +62,9 @@ Or the following command to update an existing version:
 Usage Example
 =============
 
-.. todo:: Add a quick, simple example. It and other examples should live in the
-examples folder and be included in docs/examples.rst.
+.. literalinclude:: ./examples/nonblocking_serialinput_simpletest.py
+    :caption: examples/nonblocking_serialinput_simpletest.py
+    :linenos:
 
 
 Contributing
