@@ -11,6 +11,7 @@ import time
 import board
 import digitalio
 import nonblocking_serialinput as nb_serialin
+import ansi_escape_code as terminal
 
 ##########################################
 # globals
@@ -31,31 +32,63 @@ def main():
     # wait for serial terminal to get ready..
     time.sleep(1)
     print("")
-    print("nonblocking_serialinput_simpletest.py")
-    print(42 * "*")
+    print("nonblocking_serialinput_statusline_dev.py")
+    print("*" * 42)
+    test_string_colors = (
+        terminal.ANSIColors.fg.lightblue
+        + "Hello "
+        + terminal.ANSIColors.fg.green
+        + "World "
+        + terminal.ANSIColors.fg.orange
+        + ":-)"
+        + terminal.ANSIColors.reset
+    )
+    # print("test_string_colors", test_string_colors)
+    # print("test_string_colors", test_string_colors)
+    # print("test_string_colors", test_string_colors)
+    # time.sleep(1)
+    # test_string_move = (
+    #     terminal.ANSIControl.cursor.previous_line(2)
+    #     + terminal.ANSIColors.fg.red
+    #     + "WOOO"
+    #     + terminal.ANSIColors.reset
+    #     + terminal.ANSIControl.cursor.next_line(1)
+    #     + terminal.ANSIControl.erase_line()
+    #     + ":-)"
+    # )
+    # print(test_string_move)
+    # time.sleep(1)
 
-    runtime_print_next = time.monotonic()
-    runtime_print_intervall = 1.0
-    running = True
-    while running:
-        # input handling
-        my_input.update()
-        input_string = my_input.input()
-        if input_string is not None:
-            # print("input_string: {}".format(repr(input_string)))
-            # we have at least a empty string.
-            if "exit" in input_string:
-                print("Stop Program running.")
-                running = False
-            elif "hello" in input_string:
-                print("World :-)")
-            else:
-                print("type 'exit' to stop the program.")
-        # live sign
-        if runtime_print_next < time.monotonic():
-            runtime_print_next = time.monotonic() + runtime_print_intervall
-            print("{: > 7.2f}s".format(time.monotonic()))
-            led.value = not led.value
+    print("*" * 42)
+    print("\n" * 5)
+    print("1", "dub di dub")
+    print("2", test_string_colors)
+    print("3", "This is a beautifull day!")
+    time.sleep(1)
+
+    print(">> ")
+    print("this is a status line - it should stay as last line.")
+    time.sleep(5)
+
+    move = ""
+    # earese statusline
+    move += terminal.ANSIControl.cursor.previous_line(1)
+    move += terminal.ANSIControl.erase_line(0)
+    # earese inputline
+    move += terminal.ANSIControl.cursor.previous_line(1)
+    move += terminal.ANSIControl.erase_line(0)
+    print(move, end="")
+    time.sleep(1)
+    # output print values
+    print("enjoy your life!")
+    # time.sleep(2)
+    # now we have to reprint the echo & statusline.
+    print(">> ")
+    print("this is a status line - it should stay as last line.")
+
+    # print("oh... the program just did a print statement... and with this another one..")
+
+    time.sleep(10)
 
 
 ##########################################

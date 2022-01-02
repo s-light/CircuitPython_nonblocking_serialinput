@@ -26,11 +26,16 @@ Implementation Notes
     <https://circuitpython.readthedocs.io/en/latest/shared-bindings/usb_cdc/index.html>`_
 """
 
+import time
+
 # import supervisor
 import usb_cdc
+import ansi_escape_code as terminal
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/s-light/CircuitPython_nonblocking_serialinput.git"
+
+# pylint: disable=too-many-instance-attributes
 
 ##########################################
 # NonBlockingSerialInput Class
@@ -56,9 +61,16 @@ class NonBlockingSerialInput:
         Default: usb_cdc.console
     :param bool echo: enable/disable remote echo
         Default: True
-    :param bool statusline: enable/disable status line handling - `Not implemented yet - issue #1:
+    :param string echo_pre_text: Text to put on line start if echo is active
+        Default: ">> "
+    :param string statusline: enable/disable status line handling - `Not implemented yet - issue #1:
         <https://github.com/s-light/CircuitPython_nonblocking_serialinput/issues/1>`_
-        Default: False
+        Default: None
+    :param function statusline_fn: callback function for statusline output.
+        must return the string to use as statusline. ``def statusline_fn() string:``
+        Default: "uptime:{runtime}"
+    :param string statusline_intervall: time intervall in seconds to update the statusline
+        Default: 1s
     :param string encoding: input string encoding
         Default: "utf-8"
     :param string, list line_end_custom: set custom line ends
@@ -80,7 +92,10 @@ class NonBlockingSerialInput:
         print_help_fn=None,
         serial=usb_cdc.console,
         echo=True,
+        echo_pre_text=">> ",
         statusline=False,
+        statusline_fn=None,
+        statusline_intervall=1,
         encoding="utf-8",
         line_end_custom=None,
         use_universal_line_end_basic=True,
@@ -92,7 +107,14 @@ class NonBlockingSerialInput:
         self.print_help_fn = print_help_fn
         self.serial = serial
         self.echo = echo
+        self.echo_pre_text = echo_pre_text
         self.statusline = statusline
+        if statusline_fn:
+            self.statusline_fn = statusline_fn
+        else:
+            self.statusline_fn = self._statusline_fn_default
+        self.statusline_intervall = statusline_intervall
+        self.statusline_next_update = time.monotonic()
         self.encoding = encoding
         self.line_end_list = []
         if line_end_custom:
@@ -107,6 +129,136 @@ class NonBlockingSerialInput:
         self.serial.timeout = 0
         self.input_buffer = ""
         self.input_list = []
+
+    ##########################################
+    # output handling
+    @staticmethod
+    def _statusline_fn_default():
+        """Default statusline"""
+        return "uptime:{uptime: >8.2f}".format(uptime=time.monotonic)
+
+    def _statusline_update_check_intervall(self):
+        """Update the Statusline if intervall is over."""
+        if self.statusline_next_update <= time.monotonic():
+            self.statusline_next_update = time.monotonic() + self.statusline_intervall
+            self.statusline_print()
+
+    def _get_statusline(self):
+        return self.statusline_fn()
+
+    def _get_echo_line(self):
+        text = "{echo_pre_text}{input_buffer}".format(
+            echo_pre_text=self.echo_pre_text,
+            input_buffer=self.input_buffer,
+        )
+        return text
+
+    def statusline_print(self):
+        """Update the Statusline."""
+        if self.statusline:
+            move = ""
+            # earease line
+            move += terminal.ANSIControl.cursor.previous_line(1)
+            move += terminal.ANSIControl.erase_line(0)
+
+            # reprint echo
+            line = self._get_statusline()
+
+            # move back to bottom of screen
+            moveback = terminal.ANSIControl.cursor.next_line(1)
+
+            # execute all the things ;-)
+            print(
+                "{move}"
+                "{line}"
+                "{moveback}"
+                "".format(
+                    move=move,
+                    line=line,
+                    moveback=moveback,
+                ),
+                end="",
+            )
+
+    def echo_print(self):
+        """Update the echho line."""
+        if self.echo:
+
+            move = ""
+            line_count = 1
+            if self.statusline:
+                # jump over statusline
+                line_count += 1
+            # eareas
+            move += terminal.ANSIControl.cursor.previous_line(line_count)
+            move += terminal.ANSIControl.erase_line(0)
+
+            # reprint line
+            line = self._get_echo_line()
+
+            # move back to bottom of screen
+            line_count = 1
+            if self.statusline:
+                # jump over statusline
+                line_count += 1
+            moveback = terminal.ANSIControl.cursor.next_line(line_count)
+
+            # execute all the things ;-)
+            print(
+                "{move}"
+                "{line}"
+                "{moveback}"
+                "".format(
+                    move=move,
+                    line=line,
+                    moveback=moveback,
+                ),
+                end="",
+            )
+
+    def print(self, *args):
+        # def print(self, *args, end="\n"):
+        """
+        Print information & variables to the connected serial.
+
+        This is a *drop in replacement* for the global print function.
+        it is needed for the statusline handling to work.
+        (we need to move the cursor...)
+
+        currently it is not supported to print without newline at  end.
+
+        :param object *args: things to print
+        """
+        # :param bool end: line end character to print. Default: "\n"
+        if self.echo or self.statusline:
+            move = ""
+            if self.statusline:
+                # earease statusline
+                move += terminal.ANSIControl.cursor.previous_line(1)
+                move += terminal.ANSIControl.erase_line(0)
+            if self.echo:
+                # earease echoline
+                move += terminal.ANSIControl.cursor.previous_line(1)
+                move += terminal.ANSIControl.erase_line(0)
+            print(move, end="")
+            # *normally print output
+            print(*args)
+            # print(*args, end=end)
+            # print statement is finished.
+            # now we have to reprint echo & statusline
+            if self.echo:
+                print(self._get_echo_line())
+            if self.statusline:
+                print(self._get_statusline())
+        else:
+            # print(*args, end)
+            print(*args)
+
+    # def out(self):
+    #     pass
+
+    ##########################################
+    # input handling
 
     def _buffer_count_line_ends(self):
         result = 0
@@ -152,10 +304,13 @@ class NonBlockingSerialInput:
         try:
             result = self.input_list.pop(0)
             if self.verbose:
-                print("result: {}".format(repr(result)))
+                self.print("result: {}".format(repr(result)))
         except IndexError:
             result = None
         return result
+
+    ##########################################
+    # main handling
 
     def update(self):
         """Main update funciton. please call as often as possible."""
@@ -163,9 +318,10 @@ class NonBlockingSerialInput:
             available = self.serial.in_waiting
             while available:
                 raw = self.serial.read(available)
-                if self.echo and not self.statusline:
-                    self.serial.write(raw)
                 self.input_buffer += raw.decode(self.encoding)
+                if self.echo:
+                    # self.serial.write(raw)
+                    self.echo_print()
                 # decode: keyword argeuments and errors not supported by CircuitPython
                 # encoding=self.encoding,
                 # errors="strict",
@@ -180,6 +336,8 @@ class NonBlockingSerialInput:
                 parsed_input = True
         if parsed_input and self.print_help_fn:
             self.print_help_fn()
+        if self.statusline:
+            self._statusline_update_check_intervall()
 
 
 ##########################################
@@ -220,25 +378,6 @@ universal_line_end_advanced = [
     # Paragraph Seprator
     "\u2029",
 ]
-
-
-# def find_first_line_end(input_string, line_end_list=universal_line_end_basic, start=0):
-#     result = -1
-#     # print("input_string: {}".format(repr(input_string)))
-#     i = iter(line_end_list)
-#     while result is -1:
-#         try:
-#             line_end = next(i)
-#         except StopIteration:
-#             result = False
-#             # print("StopIteration")
-#         else:
-#             # print("line_end: {}".format(repr(line_end)))
-#             result = input_string.find(line_end, start)
-#         # print("result: {}".format(repr(result)))
-#     if result is False:
-#         result = -1
-#     return result
 
 
 # def find_first_line_end(input_string, line_end_list=None, start=0, return_line_end=False):
