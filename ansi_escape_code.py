@@ -5,10 +5,10 @@
 #
 # SPDX-License-Identifier: MIT
 """
-`ASCII_escape_code`
+`ANSI_escape_code`
 ================================================================================
 
-simple helper library for common ASCII escape codes
+simple helper library for common ANSI escape codes
 
 inspired / based on information from
     - https://en.wikipedia.org/wiki/ANSI_escape_code
@@ -60,12 +60,12 @@ def create_color(color):
 
 
 ##########################################
-# ASCIIControllsBase Class
+# ANSIControllsBase Class
 
 
-class ASCIIControllsBase:
+class ANSIControllsBase:
     """
-    Base Class for ASCII Color and Control Characters.
+    Base Class for ANSI Color and Control Characters.
     """
 
     esc = "\033["
@@ -113,18 +113,18 @@ class ASCIIControllsBase:
         return result
 
 
-class ASCIIColors(ASCIIControllsBase):
+class ANSIColors(ANSIControllsBase):
     """
-    ASCII Color and Font-Effects Control Characters.
+    ANSI Color and Font-Effects Control Characters.
 
-    reset all colors with ASCIIColors.reset;
+    reset all colors with ANSIColors.reset;
     two sub classes
         * ``fg`` for foreground
         * ``bg`` for background;
-    use as ASCIIColors.subclass.colorname:
+    use as ANSIColors.subclass.colorname:
     ```
-    ASCIIColors.fg.red
-    ASCIIColors.bg.green
+    ANSIColors.fg.red
+    ANSIColors.bg.green
     ```
 
     the generic formatings
@@ -135,10 +135,10 @@ class ASCIIColors(ASCIIControllsBase):
         * strike through
         * invisible
     work with the main class:
-    ``ASCIIColors.bold``
+    ``ANSIColors.bold``
     """
 
-    # reset = ASCIIControllsBase.esc + "0m"
+    # reset = ANSIControllsBase.esc + "0m"
     """
     reset
 
@@ -221,38 +221,38 @@ class ASCIIColors(ASCIIControllsBase):
 
         :return string: ready to use sequences.
         """
-        black = ASCIIControllsBase.esc + "30m"
-        red = ASCIIControllsBase.esc + "31m"
-        green = ASCIIControllsBase.esc + "32m"
-        orange = ASCIIControllsBase.esc + "33m"
-        blue = ASCIIControllsBase.esc + "34m"
-        purple = ASCIIControllsBase.esc + "35m"
-        cyan = ASCIIControllsBase.esc + "36m"
-        lightgrey = ASCIIControllsBase.esc + "37m"
-        darkgrey = ASCIIControllsBase.esc + "90m"
-        lightred = ASCIIControllsBase.esc + "91m"
-        lightgreen = ASCIIControllsBase.esc + "92m"
-        yellow = ASCIIControllsBase.esc + "93m"
-        lightblue = ASCIIControllsBase.esc + "94m"
-        pink = ASCIIControllsBase.esc + "95m"
-        lightcyan = ASCIIControllsBase.esc + "96m"
+        black = ANSIControllsBase.esc + "30m"
+        red = ANSIControllsBase.esc + "31m"
+        green = ANSIControllsBase.esc + "32m"
+        orange = ANSIControllsBase.esc + "33m"
+        blue = ANSIControllsBase.esc + "34m"
+        purple = ANSIControllsBase.esc + "35m"
+        cyan = ANSIControllsBase.esc + "36m"
+        lightgrey = ANSIControllsBase.esc + "37m"
+        darkgrey = ANSIControllsBase.esc + "90m"
+        lightred = ANSIControllsBase.esc + "91m"
+        lightgreen = ANSIControllsBase.esc + "92m"
+        yellow = ANSIControllsBase.esc + "93m"
+        lightblue = ANSIControllsBase.esc + "94m"
+        pink = ANSIControllsBase.esc + "95m"
+        lightcyan = ANSIControllsBase.esc + "96m"
 
     class bg:
         """Background Colors."""
 
-        black = ASCIIControllsBase.esc + "40m"
-        red = ASCIIControllsBase.esc + "41m"
-        green = ASCIIControllsBase.esc + "42m"
-        orange = ASCIIControllsBase.esc + "43m"
-        blue = ASCIIControllsBase.esc + "44m"
-        purple = ASCIIControllsBase.esc + "45m"
-        cyan = ASCIIControllsBase.esc + "46m"
-        lightgrey = ASCIIControllsBase.esc + "47m"
+        black = ANSIControllsBase.esc + "40m"
+        red = ANSIControllsBase.esc + "41m"
+        green = ANSIControllsBase.esc + "42m"
+        orange = ANSIControllsBase.esc + "43m"
+        blue = ANSIControllsBase.esc + "44m"
+        purple = ANSIControllsBase.esc + "45m"
+        cyan = ANSIControllsBase.esc + "46m"
+        lightgrey = ANSIControllsBase.esc + "47m"
 
 
-class ASCIIControl(ASCIIControllsBase):
+class ANSIControl(ANSIControllsBase):
     """
-    ASCII Cursor movement.
+    ANSI Cursor movement.
 
     please make sure your terminal supports these...
     tested with `GTKTerm:
@@ -260,8 +260,8 @@ class ASCIIControl(ASCIIControllsBase):
 
     usage example:
     .. code-block:: python
-        ASCIIControl.erease_line()
-        ASCIIControl.cursor.up(5)
+        ANSIControl.erease_line()
+        ANSIControl.cursor.up(5)
     """
 
     ED = erase_display = create_seq("J")
@@ -292,16 +292,16 @@ class ASCIIControl(ASCIIControllsBase):
 ##########################################
 
 
-def filter_ascii_controlls(data):
+def filter_ansi_controlls(data):
     """
-    Remove ASCII controll characters.
+    Remove ANSI controll characters.
 
     :param string data: input data to filter.
     :return string: filtered result.
     """
     code_list = []
-    code_list.extend(ASCIIColors.get_flat_list())
-    code_list.extend(ASCIIControl.get_flat_list())
+    code_list.extend(ANSIColors.get_flat_list())
+    code_list.extend(ANSIControl.get_flat_list())
     for list_entry in code_list:
         data = data.replace(list_entry, "")
     return data
@@ -309,21 +309,21 @@ def filter_ascii_controlls(data):
 
 def test_filtering():
     """
-    Test for filter_ascii_controlls.
+    Test for filter_ansi_controlls.
 
     print some test cases.
     """
     test_string = (
-        ASCIIColors.fg.lightblue
+        ANSIColors.fg.lightblue
         + "Hello "
-        + ASCIIColors.fg.green
+        + ANSIColors.fg.green
         + "World "
-        + ASCIIColors.fg.orange
+        + ANSIColors.fg.orange
         + ":-)"
-        + ASCIIColors.reset
+        + ANSIColors.reset
     )
     print("test_string", test_string)
-    test_filtered = filter_ascii_controlls(test_string)
+    test_filtered = filter_ansi_controlls(test_string)
     print("test_filtered", test_filtered)
 
 
@@ -335,23 +335,23 @@ def test_control():
     """
 
     test_string = (
-        ASCIIColors.fg.lightblue
+        ANSIColors.fg.lightblue
         + "Hello "
-        + ASCIIColors.fg.green
+        + ANSIColors.fg.green
         + "World "
-        + ASCIIColors.fg.orange
+        + ANSIColors.fg.orange
         + ":-)"
-        + ASCIIColors.reset
+        + ANSIColors.reset
     )
     print("test_string", test_string)
     print("test_string", test_string)
     print("test_string", test_string)
     time.sleep(1)
     test_string = (
-        ASCIIControl.cursor.previous_line(2)
+        ANSIControl.cursor.previous_line(2)
         + "WOOO"
-        + ASCIIControl.cursor.next_line(1)
-        + ASCIIControl.erase_line()
+        + ANSIControl.cursor.next_line(1)
+        + ANSIControl.erase_line()
         + ":-)"
     )
     print(test_string)
