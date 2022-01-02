@@ -21,7 +21,7 @@ led.direction = digitalio.Direction.OUTPUT
 ##########################################
 # menu
 
-my_input = nb_serialin.NonBlockingSerialInput()
+my_input = nb_serialin.NonBlockingSerialInput(statusline=True)
 
 ##########################################
 # main
@@ -31,21 +31,19 @@ def main():
     """Main."""
     # wait for serial terminal to get ready..
     time.sleep(1)
-    # we have to use the *drop-in* my_input.print() function.
-    # otherwise the rmote echo handling does not work.
     my_input.print("")
     my_input.print("nonblocking_serialinput_simpletest.py")
     my_input.print(42 * "*")
 
     runtime_print_next = time.monotonic()
-    runtime_print_intervall = 5.0
+    runtime_print_intervall = 1.0
     running = True
     while running:
         # input handling
         my_input.update()
         input_string = my_input.input()
         if input_string is not None:
-            # my_input.print("input_string: {}".format(repr(input_string)))
+            # print("input_string: {}".format(repr(input_string)))
             # we have at least a empty string.
             if "exit" in input_string:
                 my_input.print("Stop Program running.")

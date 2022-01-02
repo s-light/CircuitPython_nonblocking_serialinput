@@ -27,13 +27,8 @@ my_input = nb_serialin.NonBlockingSerialInput()
 # main
 
 
-def main():
-    """Main."""
-    # wait for serial terminal to get ready..
-    time.sleep(1)
-    print("")
-    print("nonblocking_serialinput_statusline_dev.py")
-    print("*" * 42)
+def test_move():
+    """Test Moving around..."""
     test_string_colors = (
         terminal.ANSIColors.fg.lightblue
         + "Hello "
@@ -85,10 +80,24 @@ def main():
     # now we have to reprint the echo & statusline.
     print(">> ")
     print("this is a status line - it should stay as last line.")
+    time.sleep(2)
 
-    # print("oh... the program just did a print statement... and with this another one..")
 
-    time.sleep(10)
+def main():
+    """Main."""
+    # wait for serial terminal to get ready..
+    time.sleep(1)
+    print("")
+    print("nonblocking_serialinput_statusline_dev.py")
+    print("*" * 42)
+    # test_move()
+    print(">> ", end="")
+    time.sleep(2)
+    move = ""
+    # move += terminal.ANSIControl.cursor.previous_line(0)
+    move += terminal.ANSIControl.erase_line(0)
+    print(move, end="")
+    time.sleep(5)
 
 
 ##########################################

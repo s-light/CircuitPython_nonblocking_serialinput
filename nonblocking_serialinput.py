@@ -132,10 +132,14 @@ class NonBlockingSerialInput:
 
     ##########################################
     # output handling
+
+    # statusline
+    # echo
+
     @staticmethod
     def _statusline_fn_default():
         """Default statusline"""
-        return "uptime:{uptime: >8.2f}".format(uptime=time.monotonic)
+        return "uptime:{uptime: >8.2f}".format(uptime=time.monotonic())
 
     def _statusline_update_check_intervall(self):
         """Update the Statusline if intervall is over."""
@@ -185,23 +189,25 @@ class NonBlockingSerialInput:
         if self.echo:
 
             move = ""
-            line_count = 1
-            if self.statusline:
-                # jump over statusline
-                line_count += 1
-            # eareas
-            move += terminal.ANSIControl.cursor.previous_line(line_count)
+            # line_count = 1
+            # if self.statusline:
+            #     # jump over statusline
+            #     line_count += 1
+            # # eareas
+            # move += terminal.ANSIControl.cursor.previous_line(line_count)
+            # move += terminal.ANSIControl.cursor.previous_line(0)
             move += terminal.ANSIControl.erase_line(0)
 
             # reprint line
             line = self._get_echo_line()
 
             # move back to bottom of screen
-            line_count = 1
-            if self.statusline:
-                # jump over statusline
-                line_count += 1
-            moveback = terminal.ANSIControl.cursor.next_line(line_count)
+            moveback = ""
+            # line_count = 1
+            # if self.statusline:
+            #     # jump over statusline
+            #     line_count += 1
+            # moveback = terminal.ANSIControl.cursor.next_line(line_count)
 
             # execute all the things ;-)
             print(
@@ -303,6 +309,7 @@ class NonBlockingSerialInput:
         """
         try:
             result = self.input_list.pop(0)
+            self.print(result)
             if self.verbose:
                 self.print("result: {}".format(repr(result)))
         except IndexError:
@@ -332,6 +339,7 @@ class NonBlockingSerialInput:
             while self.input_list:
                 # first in first out
                 oldest_input = self.input_list.pop(0)
+                self.print(oldest_input)
                 self.input_handling_fn(oldest_input)
                 parsed_input = True
         if parsed_input and self.print_help_fn:
