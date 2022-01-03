@@ -209,8 +209,7 @@ class NonBlockingSerialInput:
             #     line_count += 1
             # moveback = terminal.ANSIControl.cursor.next_line(line_count)
 
-            # execute all the things ;-)
-            print(
+            text = (
                 "{move}"
                 "{line}"
                 "{moveback}"
@@ -218,9 +217,11 @@ class NonBlockingSerialInput:
                     move=move,
                     line=line,
                     moveback=moveback,
-                ),
-                end="",
+                )
             )
+            print("\n\n\n\n\n\n{}\n\n\n\n\n\n".format(repr(text)))
+            # execute all the things ;-)
+            print(text, end="")
 
     def print(self, *args):
         # def print(self, *args, end="\n"):
@@ -299,6 +300,14 @@ class NonBlockingSerialInput:
             else:
                 self.input_buffer = ""
 
+    def _buffer_handle_backspace(self):
+        if "\x08" in self.input_buffer:
+            while (pos := self.input_buffer.find("\x08")) > -1:
+                # strip character before backspace and backspace itself.
+                self.input_buffer = (
+                    self.input_buffer[: pos - 1] + self.input_buffer[pos + 1 :]
+                )
+
     def input(self):
         """
         Input.
@@ -326,6 +335,7 @@ class NonBlockingSerialInput:
             while available:
                 raw = self.serial.read(available)
                 self.input_buffer += raw.decode(self.encoding)
+                self._buffer_handle_backspace()
                 if self.echo:
                     # self.serial.write(raw)
                     self.echo_print()
