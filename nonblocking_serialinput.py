@@ -32,7 +32,7 @@ import time
 import usb_cdc
 import ansi_escape_code as terminal
 
-__version__ = "0.0.0-auto.0"
+__version__ = "1.0.0-auto.0"
 __repo__ = "https://github.com/s-light/CircuitPython_nonblocking_serialinput.git"
 
 # pylint: disable=too-many-instance-attributes
@@ -142,7 +142,7 @@ class NonBlockingSerialInput:
 
     def _statusline_update_check_intervall(self):
         """Update the Statusline if intervall is over."""
-        if self.statusline_next_update <= time.monotonic():
+        if self.statusline and self.statusline_next_update <= time.monotonic():
             self.statusline_next_update = time.monotonic() + self.statusline_intervall
             self.print(content=None)
 
@@ -190,8 +190,8 @@ class NonBlockingSerialInput:
                     move += terminal.ANSIControl.cursor.previous_line(1)
                 # earease statusline
                 move += terminal.ANSIControl.erase_line(2)
-                if self.echo:
-                    move += terminal.ANSIControl.cursor.next_line(1)
+                # if self.echo:
+                #     move += terminal.ANSIControl.cursor.next_line(1)
             # move += terminal.ANSIControl.cursor.position("1, 1")
             move += terminal.ANSIControl.cursor.horizontal_absolute(1)
             # print("\n\n\n{}\n\n\n".format(repr(move)))
@@ -205,9 +205,13 @@ class NonBlockingSerialInput:
             # print statement is finished.
             # now we have to reprint echo & statusline
             if self.statusline:
-                print(self._get_statusline(), end="")
-                # print(terminal.ANSIControl.cursor.next_line(1), end="")
+                if self.echo:
+                    print(self._get_statusline())
+                else:
+                    print(self._get_statusline(), end="")
+                    # print(terminal.ANSIControl.cursor.next_line(1), end="")
             if self.echo:
+                print(terminal.ANSIControl.cursor.horizontal_absolute(1), end="")
                 print(self._get_echo_line(), end="")
                 # print(self._get_echo_line())
             # if not self.echo and not self.statusline:
@@ -284,7 +288,10 @@ class NonBlockingSerialInput:
         """
         try:
             result = self.input_list.pop(0)
-            self.print(result)
+            if self.echo:
+                self.print(self.echo_pre_text, result)
+            else:
+                self.print(result)
             if self.verbose:
                 self.print("result: {}".format(repr(result)))
         except IndexError:
@@ -294,8 +301,7 @@ class NonBlockingSerialInput:
     ##########################################
     # main handling
 
-    def update(self):
-        """Main update funciton. please call as often as possible."""
+    def _handle_input(self):
         if self.serial.connected:
             available = self.serial.in_waiting
             while available:
@@ -311,21 +317,34 @@ class NonBlockingSerialInput:
                 # errors="strict",
                 self._buffer_check_and_handle_line_ends()
                 available = self.serial.in_waiting
+
+    def _handle_input_handling_fn(self):
         parsed_input = False
         if self.input_handling_fn:
             while self.input_list:
                 # first in first out
                 oldest_input = self.input_list.pop(0)
-                self.print(oldest_input)
+                text = oldest_input
+                # isprintable is not implemented in CP
+                # if not text.isprintable():
+                #     text = repr(text)
+                if len(text) == 0:
+                    text = repr(text)
+                if self.echo:
+                    text = self.echo_pre_text + text
+                self.print(text)
                 self.input_handling_fn(oldest_input)
                 parsed_input = True
         if parsed_input and self.print_help_fn:
             self.print_help_fn()
-            if self.echo:
-                # self.echo_print()
-                self.print()
-        if self.statusline:
-            self._statusline_update_check_intervall()
+            if self.echo or self.statusline:
+                self.print(content=None)
+
+    def update(self):
+        """Main update funciton. please call as often as possible."""
+        self._handle_input()
+        self._handle_input_handling_fn()
+        self._statusline_update_check_intervall()
 
 
 ##########################################

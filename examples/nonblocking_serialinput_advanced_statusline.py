@@ -25,6 +25,8 @@ class MyProjectMainClass:
         self.my_input = nb_serialin.NonBlockingSerialInput(
             input_handling_fn=self.userinput_event_handling,
             print_help_fn=self.userinput_print_help,
+            statusline=True,
+            statusline_intervall=1.2,
         )
         self.running = False
 
@@ -33,31 +35,31 @@ class MyProjectMainClass:
 
         self.runtime_print = True
         self.runtime_print_next = time.monotonic()
-        self.runtime_print_intervall = 1.0
+        self.runtime_print_intervall = 3.0
 
     ##########################################
     # menu
 
     def userinput_print_help(self):
         """Print Help."""
-        print(
+        text = (
             "you can change some things:\n"
             "- 'tr': toggle print runtime ({runtime_print})\n"
             "- 'time set:???': set print runtime intervall ({runtime_print_intervall: > 7.2f}s)\n"
-            "- 'exit'  stop program\n"
+            "- 'exit'  stop program"
             "".format(
                 runtime_print=self.runtime_print,
                 runtime_print_intervall=self.runtime_print_intervall,
-            ),
-            end="",
+            )
         )
+        self.my_input.print(text)
 
     def userinput_event_handling(self, input_string):
         """Handle user input."""
         if "tr" in input_string:
             self.runtime_print = not self.runtime_print
         if "time set" in input_string:
-            print("time set:")
+            self.my_input.print("time set:")
             value = nb_serialin.parse_value(input_string, "time set")
             if nb_serialin.is_number(value):
                 self.runtime_print_intervall = value
@@ -65,7 +67,7 @@ class MyProjectMainClass:
                     time.monotonic() + self.runtime_print_intervall
                 )
         if "exit" in input_string:
-            print("Stop Program running.")
+            self.my_input.print("Stop Program running.")
             self.running = False
 
     ##########################################
@@ -78,7 +80,8 @@ class MyProjectMainClass:
                 self.runtime_print_next = (
                     time.monotonic() + self.runtime_print_intervall
                 )
-                print("{: > 7.2f}s".format(time.monotonic()))
+                self.my_input.print(":-)")
+                self.my_input.print("{: > 7.2f}s".format(time.monotonic()))
                 self.led.value = not self.led.value
 
     def update(self):
@@ -93,7 +96,7 @@ class MyProjectMainClass:
             try:
                 self.update()
             except KeyboardInterrupt as e:
-                print("KeyboardInterrupt - Stop Program.", e)
+                self.my_input.print("KeyboardInterrupt - Stop Program.", e)
                 self.running = False
 
 
@@ -105,7 +108,7 @@ def main():
     """Main."""
     # wait some time untill the computer / terminal is ready
     # for i in range(10):
-    #     print(".", end="")
+    #     self.my_input.print(".", end="")
     #     time.sleep(0.5 / 10)
     print("")
     print(42 * "*")
@@ -115,7 +118,7 @@ def main():
     print(42 * "*")
 
     myproject = MyProjectMainClass()
-    print("run")
+    myproject.my_input.print("run")
     myproject.run()
 
 
