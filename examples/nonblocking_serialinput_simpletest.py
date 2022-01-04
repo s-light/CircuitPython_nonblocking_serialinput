@@ -38,7 +38,7 @@ def main():
     my_input.print(42 * "*")
 
     runtime_print_next = time.monotonic()
-    runtime_print_intervall = 5.0
+    runtime_print_intervall = 1.0
     running = True
     while running:
         # input handling
@@ -57,7 +57,7 @@ def main():
         # live sign
         if runtime_print_next < time.monotonic():
             runtime_print_next = time.monotonic() + runtime_print_intervall
-            my_input.print("{: > 7.2f}s".format(time.monotonic()))
+            my_input.print("runtime: {: > 7.2f}s".format(time.monotonic()))
             led.value = not led.value
 
 

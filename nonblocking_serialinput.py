@@ -163,7 +163,7 @@ class NonBlockingSerialInput:
             move = ""
             # earease line
             move += terminal.ANSIControl.cursor.previous_line(1)
-            move += terminal.ANSIControl.erase_line(0)
+            move += terminal.ANSIControl.erase_line(2)
 
             # reprint echo
             line = self._get_statusline()
@@ -196,7 +196,7 @@ class NonBlockingSerialInput:
             # # eareas
             # move += terminal.ANSIControl.cursor.previous_line(line_count)
             # move += terminal.ANSIControl.cursor.previous_line(0)
-            move += terminal.ANSIControl.erase_line(0)
+            move += terminal.ANSIControl.erase_line(2)
 
             # reprint line
             line = self._get_echo_line()
@@ -219,7 +219,7 @@ class NonBlockingSerialInput:
                     moveback=moveback,
                 )
             )
-            print("\n\n\n\n\n\n{}\n\n\n\n\n\n".format(repr(text)))
+            print("\n\n\n{}\n\n\n".format(repr(text)))
             # execute all the things ;-)
             print(text, end="")
 
@@ -242,21 +242,29 @@ class NonBlockingSerialInput:
             if self.statusline:
                 # earease statusline
                 move += terminal.ANSIControl.cursor.previous_line(1)
-                move += terminal.ANSIControl.erase_line(0)
+                move += terminal.ANSIControl.erase_line(2)
             if self.echo:
                 # earease echoline
-                move += terminal.ANSIControl.cursor.previous_line(1)
-                move += terminal.ANSIControl.erase_line(0)
+                # move += terminal.ANSIControl.cursor.previous_line(1)
+                move += terminal.ANSIControl.erase_line(2)
+            # print("\n\n\n{}\n\n\n".format(repr(move)))
+            # print(repr(terminal.ANSIControl.cursor.previous_line(1)))
+            # print(repr(terminal.ANSIControl.erase_line(2)))
             print(move, end="")
+            time.sleep(1)
             # *normally print output
             print(*args)
             # print(*args, end=end)
             # print statement is finished.
             # now we have to reprint echo & statusline
             if self.echo:
-                print(self._get_echo_line())
+                print(self._get_echo_line(), end="")
+                # print(self._get_echo_line())
             if self.statusline:
-                print(self._get_statusline())
+                print(self._get_statusline(), end="")
+            # if not self.echo and not self.statusline:
+            #     # add new end
+            #     print()
         else:
             # print(*args, end)
             print(*args)
@@ -308,6 +316,16 @@ class NonBlockingSerialInput:
                     self.input_buffer[: pos - 1] + self.input_buffer[pos + 1 :]
                 )
 
+    def _buffer_handle_cursor_position(self):
+        # # TODO: implement Cursor position managment
+        # if "\x08" in self.input_buffer:
+        #     while (pos := self.input_buffer.find("\x08")) > -1:
+        #         # strip character before backspace and backspace itself.
+        #         self.input_buffer = (
+        #             self.input_buffer[: pos - 1] + self.input_buffer[pos + 1 :]
+        #         )
+        pass
+
     def input(self):
         """
         Input.
@@ -334,7 +352,9 @@ class NonBlockingSerialInput:
             available = self.serial.in_waiting
             while available:
                 raw = self.serial.read(available)
-                self.input_buffer += raw.decode(self.encoding)
+                text = raw.decode(self.encoding)
+                # self._buffer_handle_cursor_position()
+                self.input_buffer += text
                 self._buffer_handle_backspace()
                 if self.echo:
                     # self.serial.write(raw)
