@@ -32,17 +32,17 @@ def userinput_print_help():
     """Print Help."""
     global runtime_print
     global runtime_print_intervall
-    print(
+    text = (
         "you can change some things:\n"
         "- 'tr': toggle print runtime ({runtime_print})\n"
         "- 'time set:???': set print runtime intervall ({runtime_print_intervall: > 7.2f}s)\n"
-        "- 'exit'  stop program\n"
+        "- 'exit'  stop program"
         "".format(
             runtime_print=runtime_print,
             runtime_print_intervall=runtime_print_intervall,
-        ),
-        end="",
+        )
     )
+    my_input.print(text)
 
 
 def userinput_handling(input_string):
@@ -55,13 +55,13 @@ def userinput_handling(input_string):
     if "tr" in input_string:
         runtime_print = not runtime_print
     if "time set" in input_string:
-        print("time set:")
+        my_input.print("time set:")
         value = nb_serialin.parse_value(input_string, "time set")
         if nb_serialin.is_number(value):
             runtime_print_intervall = value
             runtime_print_next = time.monotonic() + runtime_print_intervall
     if "exit" in input_string:
-        print("Stop Program running.")
+        my_input.print("Stop Program running.")
         running = False
 
 
@@ -83,7 +83,7 @@ def main_update():
     if runtime_print:
         if runtime_print_next < time.monotonic():
             runtime_print_next = time.monotonic() + runtime_print_intervall
-            print("{: > 7.2f}s".format(time.monotonic()))
+            my_input.print("{: > 7.2f}s".format(time.monotonic()))
             led.value = not led.value
 
 
@@ -95,15 +95,16 @@ def main():
     """Main."""
     # wait some time untill the computer / terminal is ready
     for i in range(10):
-        print(".", end="")
+        # my_input.print(".", end="")
+        my_input.print(".")
         time.sleep(0.5 / 10)
-    print("")
-    print(42 * "*")
-    print("nonblocking_serialinput_advanced.py")
-    print("Python Version: " + sys.version)
-    print("board: " + board.board_id)
-    print(42 * "*")
-    print("run")
+    my_input.print("")
+    my_input.print(42 * "*")
+    my_input.print("nonblocking_serialinput_advanced.py")
+    my_input.print("Python Version: " + sys.version)
+    my_input.print("board: " + board.board_id)
+    my_input.print(42 * "*")
+    my_input.print("run")
 
     global running
     running = True

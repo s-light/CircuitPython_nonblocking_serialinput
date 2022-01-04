@@ -356,7 +356,6 @@ class NonBlockingSerialInput:
                 self.input_buffer += text
                 self._buffer_handle_backspace()
                 if self.echo:
-                    # self.serial.write(raw)
                     self.echo_print()
                 # decode: keyword argeuments and errors not supported by CircuitPython
                 # encoding=self.encoding,
@@ -373,6 +372,9 @@ class NonBlockingSerialInput:
                 parsed_input = True
         if parsed_input and self.print_help_fn:
             self.print_help_fn()
+            if self.echo:
+                # self.echo_print()
+                self.print()
         if self.statusline:
             self._statusline_update_check_intervall()
 
