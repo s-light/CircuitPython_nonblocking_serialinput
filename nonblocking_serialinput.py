@@ -144,7 +144,7 @@ class NonBlockingSerialInput:
         """Update the Statusline if intervall is over."""
         if self.statusline_next_update <= time.monotonic():
             self.statusline_next_update = time.monotonic() + self.statusline_intervall
-            self.statusline_print()
+            self.print(content=None)
 
     def _get_statusline(self):
         return self.statusline_fn()
@@ -159,70 +159,14 @@ class NonBlockingSerialInput:
     def statusline_print(self):
         """Update the Statusline."""
         if self.statusline:
-            move = ""
-            # earease line
-            move += terminal.ANSIControl.cursor.previous_line(1)
-            move += terminal.ANSIControl.erase_line(2)
-
-            # reprint echo
-            line = self._get_statusline()
-
-            # move back to bottom of screen
-            moveback = terminal.ANSIControl.cursor.next_line(1)
-
-            # execute all the things ;-)
-            print(
-                "{move}"
-                "{line}"
-                "{moveback}"
-                "".format(
-                    move=move,
-                    line=line,
-                    moveback=moveback,
-                ),
-                end="",
-            )
+            self.print(content=None)
 
     def echo_print(self):
         """Update the echho line."""
         if self.echo:
+            self.print(content=None)
 
-            move = ""
-            # line_count = 1
-            # if self.statusline:
-            #     # jump over statusline
-            #     line_count += 1
-            # # eareas
-            # move += terminal.ANSIControl.cursor.previous_line(line_count)
-            # move += terminal.ANSIControl.cursor.previous_line(0)
-            move += terminal.ANSIControl.erase_line(2)
-            move += terminal.ANSIControl.cursor.horizontal_absolute(1)
-
-            # reprint line
-            line = self._get_echo_line()
-
-            # move back to bottom of screen
-            moveback = ""
-            # line_count = 1
-            # if self.statusline:
-            #     # jump over statusline
-            #     line_count += 1
-            # moveback = terminal.ANSIControl.cursor.next_line(line_count)
-
-            text = (
-                "{move}"
-                "{line}"
-                "{moveback}"
-                "".format(
-                    move=move,
-                    line=line,
-                    moveback=moveback,
-                )
-            )
-            # execute all the things ;-)
-            print(text, end="")
-
-    def print(self, *args):
+    def print(self, *args, content=True):
         # def print(self, *args, end="\n"):
         """
         Print information & variables to the connected serial.
@@ -238,29 +182,34 @@ class NonBlockingSerialInput:
         # :param bool end: line end character to print. Default: "\n"
         if self.echo or self.statusline:
             move = ""
-            # if self.statusline:
-            #     # earease statusline
-            #     move += terminal.ANSIControl.cursor.previous_line(1)
-            #     move += terminal.ANSIControl.erase_line(2)
             if self.echo:
                 # earease echoline
-                # move += terminal.ANSIControl.cursor.previous_line(1)
                 move += terminal.ANSIControl.erase_line(2)
+            if self.statusline:
+                if self.echo:
+                    move += terminal.ANSIControl.cursor.previous_line(1)
+                # earease statusline
+                move += terminal.ANSIControl.erase_line(2)
+                if self.echo:
+                    move += terminal.ANSIControl.cursor.next_line(1)
+            # move += terminal.ANSIControl.cursor.position("1, 1")
             move += terminal.ANSIControl.cursor.horizontal_absolute(1)
             # print("\n\n\n{}\n\n\n".format(repr(move)))
-            # print(repr(terminal.ANSIControl.cursor.previous_line(1)))
-            # print(repr(terminal.ANSIControl.erase_line(2)))
             print(move, end="")
-            # *normally print output
-            print(*args)
+            if content:
+                # *normally print output
+                print(*args)
+            # time.sleep(0.)
+            # print("*", end="")
             # print(*args, end=end)
             # print statement is finished.
             # now we have to reprint echo & statusline
+            if self.statusline:
+                print(self._get_statusline(), end="")
+                # print(terminal.ANSIControl.cursor.next_line(1), end="")
             if self.echo:
                 print(self._get_echo_line(), end="")
                 # print(self._get_echo_line())
-            # if self.statusline:
-            #     print(self._get_statusline(), end="")
             # if not self.echo and not self.statusline:
             #     # add new end
             #     print()
@@ -356,7 +305,7 @@ class NonBlockingSerialInput:
                 self.input_buffer += text
                 self._buffer_handle_backspace()
                 if self.echo:
-                    self.echo_print()
+                    self.print(content=None)
                 # decode: keyword argeuments and errors not supported by CircuitPython
                 # encoding=self.encoding,
                 # errors="strict",

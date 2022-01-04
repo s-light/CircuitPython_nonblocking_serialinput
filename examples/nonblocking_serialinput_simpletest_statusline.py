@@ -21,7 +21,9 @@ led.direction = digitalio.Direction.OUTPUT
 ##########################################
 # menu
 
-my_input = nb_serialin.NonBlockingSerialInput(statusline=True)
+my_input = nb_serialin.NonBlockingSerialInput(
+    statusline=True, echo=False, statusline_intervall=0.5
+)
 
 ##########################################
 # main
@@ -36,7 +38,7 @@ def main():
     my_input.print(42 * "*")
 
     runtime_print_next = time.monotonic()
-    runtime_print_intervall = 1.0
+    runtime_print_intervall = 1.7
     running = True
     while running:
         # input handling
@@ -55,6 +57,7 @@ def main():
         # live sign
         if runtime_print_next < time.monotonic():
             runtime_print_next = time.monotonic() + runtime_print_intervall
+            my_input.print("ping")
             my_input.print("{: > 7.2f}s".format(time.monotonic()))
             led.value = not led.value
 
