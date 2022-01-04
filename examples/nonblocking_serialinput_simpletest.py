@@ -33,7 +33,7 @@ def main():
     time.sleep(1)
     # we have to use the *drop-in* my_input.print() function.
     # otherwise the rmote echo handling does not work.
-    my_input.print("")
+    my_input.print(42 * "*")
     my_input.print("nonblocking_serialinput_simpletest.py")
     my_input.print(42 * "*")
 

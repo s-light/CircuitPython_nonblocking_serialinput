@@ -132,7 +132,6 @@ class NonBlockingSerialInput:
 
     ##########################################
     # output handling
-
     # statusline
     # echo
 
@@ -197,6 +196,7 @@ class NonBlockingSerialInput:
             # move += terminal.ANSIControl.cursor.previous_line(line_count)
             # move += terminal.ANSIControl.cursor.previous_line(0)
             move += terminal.ANSIControl.erase_line(2)
+            move += terminal.ANSIControl.cursor.horizontal_absolute(1)
 
             # reprint line
             line = self._get_echo_line()
@@ -219,7 +219,6 @@ class NonBlockingSerialInput:
                     moveback=moveback,
                 )
             )
-            print("\n\n\n{}\n\n\n".format(repr(text)))
             # execute all the things ;-)
             print(text, end="")
 
@@ -239,19 +238,19 @@ class NonBlockingSerialInput:
         # :param bool end: line end character to print. Default: "\n"
         if self.echo or self.statusline:
             move = ""
-            if self.statusline:
-                # earease statusline
-                move += terminal.ANSIControl.cursor.previous_line(1)
-                move += terminal.ANSIControl.erase_line(2)
+            # if self.statusline:
+            #     # earease statusline
+            #     move += terminal.ANSIControl.cursor.previous_line(1)
+            #     move += terminal.ANSIControl.erase_line(2)
             if self.echo:
                 # earease echoline
                 # move += terminal.ANSIControl.cursor.previous_line(1)
                 move += terminal.ANSIControl.erase_line(2)
+            move += terminal.ANSIControl.cursor.horizontal_absolute(1)
             # print("\n\n\n{}\n\n\n".format(repr(move)))
             # print(repr(terminal.ANSIControl.cursor.previous_line(1)))
             # print(repr(terminal.ANSIControl.erase_line(2)))
             print(move, end="")
-            time.sleep(1)
             # *normally print output
             print(*args)
             # print(*args, end=end)
@@ -260,8 +259,8 @@ class NonBlockingSerialInput:
             if self.echo:
                 print(self._get_echo_line(), end="")
                 # print(self._get_echo_line())
-            if self.statusline:
-                print(self._get_statusline(), end="")
+            # if self.statusline:
+            #     print(self._get_statusline(), end="")
             # if not self.echo and not self.statusline:
             #     # add new end
             #     print()
