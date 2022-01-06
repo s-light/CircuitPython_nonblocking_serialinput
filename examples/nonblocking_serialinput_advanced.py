@@ -51,15 +51,15 @@ def userinput_handling(input_string):
     global runtime_print_next
     global runtime_print_intervall
 
-    if "tr" in input_string:
+    if input_string.startswith("tr"):
         runtime_print = not runtime_print
-    if "time set" in input_string:
+    elif "time set" in input_string:
         my_input.print("time set:")
         value = nb_serialin.parse_value(input_string, "time set")
         if nb_serialin.is_number(value):
             runtime_print_intervall = value
             runtime_print_next = time.monotonic() + runtime_print_intervall
-    if "exit" in input_string:
+    elif "exit" in input_string:
         my_input.print("Stop Program running.")
         running = False
 
@@ -92,7 +92,7 @@ def main_update():
 def main():
     """Main."""
     # wait some time untill the computer / terminal is ready
-    for i in range(10):
+    for _i in range(10):
         # my_input.print(".", end="")
         my_input.print(".")
         time.sleep(0.5 / 10)
@@ -104,6 +104,7 @@ def main():
     my_input.print(42 * "*")
     my_input.print("run")
 
+    # pylint: disable=global-statement
     global running
     running = True
     while running:
