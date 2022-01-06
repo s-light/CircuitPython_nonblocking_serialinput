@@ -10,7 +10,7 @@
 # CircuitPython ignores the normal docstring - so we have to explicitly set it..
 __doc__ = """
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| nonblocking_serialinput_advanced_class.py                        |
+| nonblocking_serialinput_advanced_statusline.py                   |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 | more at:                                                         |
 | https://github.com/s-light/CircuitPython_nonblocking_serialinput |
@@ -43,6 +43,8 @@ class MyProjectMainClass:
         self.led = digitalio.DigitalInOut(board.LED)
         self.led.direction = digitalio.Direction.OUTPUT
 
+        self.print_raw_value = False
+
         self.runtime_print = True
         self.runtime_print_next = time.monotonic()
         self.runtime_print_intervall = 3.0
@@ -55,10 +57,12 @@ class MyProjectMainClass:
         text = (
             "you can change some things:\n"
             "- '?': about\n"
+            "- 'raw': toggle print raw value ({print_raw_value})\n"
             "- 'tr': toggle print runtime ({runtime_print})\n"
             "- 'time set:???': set print runtime intervall ({runtime_print_intervall: > 7.2f}s)\n"
             "- 'exit'  stop program"
             "".format(
+                print_raw_value=self.print_raw_value,
                 runtime_print=self.runtime_print,
                 runtime_print_intervall=self.runtime_print_intervall,
             )
@@ -67,13 +71,15 @@ class MyProjectMainClass:
 
     def userinput_event_handling(self, input_string):
         """Handle user input."""
-        if "?" in input_string:
+        if input_string.startswith("?"):
             self.my_input.print(__doc__)
-        elif "tr" in input_string:
+        elif input_string.startswith("raw"):
+            self.print_raw_value = not self.print_raw_value
+        elif input_string.startswith("tr"):
             self.runtime_print = not self.runtime_print
-        elif "time set" in input_string:
-            self.my_input.print("time set:")
+        elif input_string.startswith("time set"):
             value = nb_serialin.parse_value(input_string, "time set")
+            self.my_input.print("time set:", value)
             if nb_serialin.is_number(value):
                 self.runtime_print_intervall = value
                 self.runtime_print_next = (
@@ -82,6 +88,9 @@ class MyProjectMainClass:
         elif "exit" in input_string:
             self.my_input.print("Stop Program running.")
             self.running = False
+        else:
+            if self.print_raw_value:
+                self.my_input.print("raw:", repr(input_string))
 
     ##########################################
     # main things
