@@ -20,10 +20,11 @@ Implementation Notes
 
 **Software and Dependencies:**
 
-* Adafruit CircuitPython firmware `>= 7.0.0 for the supported boards.
-    <https://github.com/adafruit/circuitpython/releases>`_
-    * Core Module `usb_cdc:
+* Adafruit CircuitPython firmware
+    `>= 7.0.0 for the supported boards. <https://github.com/adafruit/circuitpython/releases>`_
+    * Core Module ` ``usb_cdc``
     <https://circuitpython.readthedocs.io/en/latest/shared-bindings/usb_cdc/index.html>`_
+* `CircuitPython_ansi_escape_code <https://github.com/s-light/CircuitPython_ansi_escape_code>`_
 """
 
 import time
@@ -42,7 +43,7 @@ __repo__ = "https://github.com/s-light/CircuitPython_nonblocking_serialinput.git
 
 
 class NonBlockingSerialInput:
-    """Non Blocking Serial Input Class.
+    r"""Non Blocking Serial Input Class.
 
     This CircuitPython helper class can be used as non-blocking *drop-in* for the build
     in ``input()`` method.
@@ -54,7 +55,7 @@ class NonBlockingSerialInput:
     :param function input_handling_fn: function to call if there is one ore more
         fully received new lines. ``input_handling(input_string: string)``
         Default: None
-    :param function print_help_fn:function to call when a help text should be printed
+    :param function print_help_fn: function to call when a help text should be printed
         fully received new lines. ``print_help()``
         Default: None
     :param ~usb_cdc.Serial serial: serial connection object to use
@@ -76,10 +77,10 @@ class NonBlockingSerialInput:
     :param string, list line_end_custom: set custom line ends
         Default: None
     :param bool use_universal_line_end_basic: use a basic default set of line_ends
-        [`\n`, '\r', '\r\n']
+        ``['\n', '\r', '\r\n']``]
         Default: True
     :param bool use_universal_line_end_advanced:  use a advanced default set of line_ends
-        ['\v', '\f', '\x1c',...]
+        ``['\v', '\f', '\x1c',...]``
         Default: False
     :param bool verbose: print debugging information in some internal functions. Default to False
 
@@ -168,7 +169,7 @@ class NonBlockingSerialInput:
 
     def print(self, *args, content=True):
         # def print(self, *args, end="\n"):
-        """
+        r"""
         Print information & variables to the connected serial.
 
         This is a *drop in replacement* for the global print function.
@@ -177,7 +178,7 @@ class NonBlockingSerialInput:
 
         currently it is not supported to print without newline at  end.
 
-        :param object *args: things to print
+        :param object \*args: things to print
         """
         # :param bool end: line end character to print. Default: "\n"
         if self.echo or self.statusline:
@@ -280,11 +281,12 @@ class NonBlockingSerialInput:
 
     def input(self):
         """
-        Input.
+        Get oldest input if available.
 
-        get oldest input string if there is any available. Otherwise an emtpy string.
+        test
+        Otherwise an emtpy string.
 
-        :return string: if available oldest input_line. Otherwise `""`
+        :return string: if available oldest input_line. otherwise ``""``
         """
         try:
             result = self.input_list.pop(0)
@@ -395,7 +397,7 @@ def find_first_line_end(input_string, line_end_list=None, start=0):
     :param string input_string: input search
     :param list line_end_list: list with strings to search for.
     :param int start: start position for search. (default = 0)
-    :return int: index of first found line_end; `-1` if nothing is found.
+    :return int: index of first found line_end; ``-1`` if nothing is found.
     """
     result = None
     if line_end_list is None:
@@ -422,7 +424,7 @@ def splitlines_advanced(input_string, line_end_list=None):
     then splits at these points. the resulting list is returned.
     this also returns empty string segments.
     the search happens in the order of line_end_list.
-    if the string does not end with a line_end symbol this last part will be returned in `rest`
+    if the string does not end with a line_end symbol this last part will be returned in ``rest``
 
     :param string input_string: input to split
     :param list line_end_list: list with strings where the splitting should happen.
@@ -471,11 +473,12 @@ def parse_value(input_string, pre_text=""):
     """
     Parse Value from input_string.
 
-    known values are numbers (`float()` is used), None, True, False
+    known values are numbers (``float()`` is used), ``None``, ``True``, ``False``
 
     :param string input_string: input to parse
-    :param string pre_text: text at start of input_string to ignore. defaults to ""
-    :return float | None | True | False: parsed value
+    :param string pre_text: text at start of input_string to ignore. defaults to ``""``
+    :return: parsed value
+    :rtype: float, None, bool
     """
     value = None
     # strip pre_text

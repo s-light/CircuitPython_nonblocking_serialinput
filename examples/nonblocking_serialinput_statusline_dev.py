@@ -10,8 +10,8 @@
 import time
 import board
 import digitalio
-import nonblocking_serialinput as nb_serialin
 import ansi_escape_code as terminal
+import nonblocking_serialinput as nb_serialin
 
 ##########################################
 # globals

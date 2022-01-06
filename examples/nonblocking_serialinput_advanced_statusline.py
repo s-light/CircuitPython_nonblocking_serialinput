@@ -7,6 +7,16 @@
 
 """Simple Minimal example of CircuitPython_nonblocking_serialinput library usage."""
 
+# CircuitPython ignores the normal docstring - so we have to explicitly set it..
+__doc__ = """
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| nonblocking_serialinput_advanced_class.py                        |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| more at:                                                         |
+| https://github.com/s-light/CircuitPython_nonblocking_serialinput |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""
+
 import time
 import sys
 import board
@@ -44,6 +54,7 @@ class MyProjectMainClass:
         """Print Help."""
         text = (
             "you can change some things:\n"
+            "- '?': about\n"
             "- 'tr': toggle print runtime ({runtime_print})\n"
             "- 'time set:???': set print runtime intervall ({runtime_print_intervall: > 7.2f}s)\n"
             "- 'exit'  stop program"
@@ -56,9 +67,11 @@ class MyProjectMainClass:
 
     def userinput_event_handling(self, input_string):
         """Handle user input."""
-        if "tr" in input_string:
+        if "?" in input_string:
+            self.my_input.print(__doc__)
+        elif "tr" in input_string:
             self.runtime_print = not self.runtime_print
-        if "time set" in input_string:
+        elif "time set" in input_string:
             self.my_input.print("time set:")
             value = nb_serialin.parse_value(input_string, "time set")
             if nb_serialin.is_number(value):
@@ -66,7 +79,7 @@ class MyProjectMainClass:
                 self.runtime_print_next = (
                     time.monotonic() + self.runtime_print_intervall
                 )
-        if "exit" in input_string:
+        elif "exit" in input_string:
             self.my_input.print("Stop Program running.")
             self.running = False
 

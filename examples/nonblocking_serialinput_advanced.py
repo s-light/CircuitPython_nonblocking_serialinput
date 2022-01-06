@@ -30,8 +30,6 @@ runtime_print_intervall = 1.0
 
 def userinput_print_help():
     """Print Help."""
-    global runtime_print
-    global runtime_print_intervall
     text = (
         "you can change some things:\n"
         "- 'tr': toggle print runtime ({runtime_print})\n"
@@ -47,6 +45,7 @@ def userinput_print_help():
 
 def userinput_handling(input_string):
     """Check Input."""
+    # pylint: disable=global-statement
     global running
     global runtime_print
     global runtime_print_next
@@ -76,9 +75,8 @@ my_input = nb_serialin.NonBlockingSerialInput(
 
 def main_update():
     """Do all the things your main code want's to do...."""
-    global runtime_print
+    # pylint: disable=global-statement
     global runtime_print_next
-    global runtime_print_intervall
 
     if runtime_print:
         if runtime_print_next < time.monotonic():
