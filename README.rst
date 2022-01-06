@@ -29,6 +29,7 @@ Dependencies
 This helper library depends on:
 
 * `Adafruit CircuitPython <https://github.com/adafruit/circuitpython>`_
+* `CircuitPython_ansi_escape_code <https://github.com/s-light/CircuitPython_ansi_escape_code>`_
 
 Please ensure all dependencies are available on the CircuitPython filesystem.
 This is easily achieved by downloading
@@ -62,9 +63,15 @@ Or the following command to update an existing version:
 Usage Example
 =============
 
-.. literalinclude:: ./examples/nonblocking_serialinput_simpletest.py
-    :caption: examples/nonblocking_serialinput_simpletest.py
-    :linenos:
+.. code-block:: python
+
+    import nonblocking_serialinput as nb_serialin
+    my_input = nb_serialin.NonBlockingSerialInput()
+    while True:
+        my_input.update()
+        input_string = my_input.input()
+        if input_string is not None:
+            my_input.print(input_string)
 
 
 Contributing

@@ -50,9 +50,10 @@ def main():
             if "exit" in input_string:
                 my_input.print("Stop Program running.")
                 running = False
-            elif "hello" in input_string:
+            elif input_string.startswith("hello"):
                 my_input.print("World :-)")
             else:
+                # print a help message for the user..
                 my_input.print("type 'exit' to stop the program.")
         # live sign
         if runtime_print_next < time.monotonic():
