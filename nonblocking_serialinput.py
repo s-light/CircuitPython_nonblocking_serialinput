@@ -179,6 +179,7 @@ class NonBlockingSerialInput:
         currently it is not supported to print without newline at  end.
 
         :param object \*args: things to print
+        :param bool content: if false just update statusline & echo (default: True).
         """
         # :param bool end: line end character to print. Default: "\n"
         if self.echo or self.statusline:
